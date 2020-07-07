@@ -26,31 +26,6 @@ def conform_to_set(x) -> set:
         raise ValueError("Input must be either str or set type.")
 
 
-def set_labels(df:pd.DataFrame, column:str=None, labels:set=None) -> pd.DataFrame:
-    """Standardizes labels column for neonpandas DataFrame."""
-    npd_df = df.copy()
-    # parse attribute and column name inputs
-    # conform labels input to set type
-    labels = conform_to_set(labels)
-    if column is not None:
-        assert column in df.columns
-        if labels is None:
-            npd_df['labels'] = npd_df[column].apply(lambda x: conform_to_set(x))
-        else:
-            # combine column values with labels
-            npd_df['labels'] = npd_df[column].apply(lambda x: {x}.union(labels))
-        # drop column used for labels
-        if column != 'labels':
-            npd_df.drop(columns=[column], inplace=True)
-    elif labels is not None:
-        # use only provided labels argument
-        npd_df['labels'] = [labels for i in range(len(npd_df))]
-    else:
-        raise ValueError("Must provide either 'labels' or 'use_column' as input for attribute type.")
-    # move 'labels' column to first column index
-    npd_df = npd_df[['labels'] + [col for col in npd_df.columns if col != 'labels']]
-    return npd_df
-
 def prepare_record(r:dict) -> dict:
     r = {k:v for k,v in r.items() if pd.notnull(v)}
     if 'labels' in r:
