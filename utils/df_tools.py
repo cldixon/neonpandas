@@ -19,7 +19,7 @@ def conform_to_set(x) -> set:
     elif isinstance(x, str):
         return {x}
     elif isinstance(x, list):
-        return {x}
+        return set(x)
     elif x is None:
         return {}
     else:
@@ -37,6 +37,7 @@ def set_labels(df:pd.DataFrame, column:str=None, labels:set=None) -> pd.DataFram
         if labels is None:
             npd_df['labels'] = npd_df[column].apply(lambda x: conform_to_set(x))
         else:
+            # combine column values with labels
             npd_df['labels'] = npd_df[column].apply(lambda x: {x}.union(labels))
         # drop column used for labels
         if column != 'labels':

@@ -59,3 +59,28 @@ class Graph:
         needs to be added later."""
         result = self.run(cypher.node_match_query(labels, properties, limit=limit))
         return df_tools.neo_nodes_to_df(result)
+
+class NodeFrame(pd.DataFrame):
+    def __init__(self, data, column:str=None, labels=None):
+        super().__init__(data)
+        self.whatami = "I am a NeonPandas DataFrame"
+        self._set_labels(column=column, labels=labels)
+        
+    def _set_labels(self, column:str=None, labels:set=None) -> list:
+        """Part of NeonPandas DataFrame processing. Creates `labels` 
+        column in DataFrame which is used in interaction with Neo4j."""
+        if column is not None and labels is None:
+            assert column in self.columns
+            _lbls = self[column].apply(lambda x: df_tools.conform_to_set(x))
+        elif column is not None and labels is not None:
+            _lbls = self[column].apply(lambda x: {x}.union(df_tools.conform_to_set(labels)))
+        elif column is None and labels is not None:
+            labels = df_tools.conform_to_set(labels)
+            _lbls = [labels for i in range(len(self))]
+        else:
+            raise ValueError("Must provide either 'labels' or 'use_column' as input for attribute type.")
+        # finish processing dataframe and labels column
+        self.drop(columns=[column], inplace=True)
+        # set labels as first column
+        self.insert(0, 'labels', _lbls)
+        return
