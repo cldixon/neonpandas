@@ -4,6 +4,7 @@ A Pandas-centric interface to the Neo4j graph database.
 
 ![](resources/neonpandas_logo.png)
 
+## Example Usage
 `import neonpandas as npd`
 
 `pets = npd.NodeFrame(pets column='species', labels={'Pet'})`
