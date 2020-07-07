@@ -4,10 +4,11 @@ from utils import df_tools
 from utils import cypher
 
 class NodeFrame(pd.DataFrame):
-    def __init__(self, data, column:str=None, labels=None):
+    def __init__(self, data, id_col:str=None, lbl_col:str=None, labels=None):
         super().__init__(data)
         self.whatami = "I am a NeonPandas DataFrame"
-        self._set_labels(column=column, labels=labels)
+        self.id_col = id_col
+        self._set_labels(column=lbl_col, labels=labels)
         
     def _set_labels(self, column:str=None, labels:set=None) -> list:
         """Part of NeonPandas DataFrame processing. Creates `labels` 
