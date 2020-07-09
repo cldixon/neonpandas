@@ -8,31 +8,47 @@ class NodeFrame(pd.DataFrame):
         super().__init__(data)
         self.whatami = "I am a NeonPandas DataFrame"
         self.id_col = id_col
-        self._set_labels(column=lbl_col, labels=labels)
+        self._set_node_labels(lbl_col=lbl_col, labels=labels)
+        self._set_node_index()
+
+    def show(self):
+        return self.style.hide_index()
         
-    def _set_labels(self, column:str=None, labels:set=None) -> list:
+    def _set_node_labels(self, lbl_col:str=None, labels:set=None):
         """Part of NeonPandas DataFrame processing. Creates `labels` 
         column in DataFrame which is used in interaction with Neo4j."""
-        if column is not None and labels is None:
-            assert column in self.columns
-            _lbls = self[column].apply(lambda x: df_tools.conform_to_set(x))
-        elif column is not None and labels is not None:
-            _lbls = self[column].apply(lambda x: {x}.union(df_tools.conform_to_set(labels)))
-        elif column is None and labels is not None:
-            labels = df_tools.conform_to_set(labels)
-            _lbls = [labels for i in range(len(self))]
-        else:
-            raise ValueError("Must provide either 'labels' or 'column' as input for attribute type.")
+        _lbls = df_tools._merge_labels(self, column=lbl_col, labels=labels)
         # finish processing dataframe and labels column
-        self.drop(columns=[column], inplace=True)
+        self.drop(columns=[lbl_col], inplace=True)
         # set labels as first column
         self.insert(0, 'labels', _lbls)
+        return
+
+    def _set_node_index(self):
+        self['neo_idx'] = self.apply(
+            lambda x: cypher.create_neo_match(x.labels, self.id_col, x[self.id_col]), axis=1)
+        self.set_index('neo_idx', inplace=True)
         return
 
 def read_csv(filepath:str, column:str=None, labels:set=None) -> NodeFrame:
     """Read neonpandas NodeFrame from csv file."""
     df = pd.read_csv(filepath)
     return NodeFrame(df, column=column, labels=labels)
+
+
+class EdgeFrame(pd.DataFrame):
+    def __init__(self, data, src_col:str='src', dest_col:str='dest', rel_col:str=None, rel_types:set=None):
+        super().__init__(data)
+        self.whatami = "NeonPandas EdgeFrame"
+        self.src_col = src_col
+        self.dest_col = dest_col
+        self._set_relationship_types(rel_col=rel_col, rel_types=rel_types)
+        
+    def _set_relationship_types(self, rel_col:str=None, rel_types:set=None):
+        rel_lbls = df_tools._merge_labels(self, column=rel_col, labels=rel_types)
+        self.drop(columns=[rel_col], inplace=True)
+        self.insert(0, 'rel_types', rel_lbls)
+        return
 
 
 

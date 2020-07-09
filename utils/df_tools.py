@@ -63,3 +63,19 @@ def prepare_node(node:neo4j.graph.Node) -> dict:
 def neo_nodes_to_df(neo_nodes:neo4j.work.result.Result) -> pd.DataFrame:
     nodes = list(neo_nodes.graph().nodes)
     return pd.DataFrame(prepare_node(n) for n in nodes)
+
+def _merge_labels(df:pd.DataFrame, column:str=None, labels:set=None) -> list:
+    """This function properly creates the labels column when creating a
+    NodeFrame object or the relationship types when creating an EdgeFrame
+    object."""
+    if column is not None and labels is None:
+        assert column in df.columns
+        _lbls = df[column].apply(lambda x: conform_to_set(x))
+    elif column is not None and labels is not None:
+        _lbls = df[column].apply(lambda x: {x}.union(conform_to_set(labels)))
+    elif column is None and labels is not None:
+        labels = conform_to_set(labels)
+        _lbls = [labels for i in range(len(df))]
+    else:
+        raise ValueError("Must provide either 'labels' or 'column' as input for attribute type.")
+    return _lbls

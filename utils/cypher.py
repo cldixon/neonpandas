@@ -13,6 +13,14 @@ def format_properties(properties:dict, sep:str=', ') -> str:
             props[k] = v
     return sep.join(['{}: {}'.format(k, v) for k,v in props.items()])
 
+def create_neo_match(labels:set, key:str, value, var:str='n') -> str:
+    """Creates minimal Cypher node MATCH statement required for 
+    matching to a specific node. Requires node labels, and key-value
+    pair for identification."""
+    if isinstance(value, str):
+        value = '"{}"'.format(value)
+    return '({var}{lbls} {{{k}: {v}}})'.format(var=var, lbls=format_labels(labels), k=key, v=value)
+
 def apoc_node_create(key:str='nodes', var:str='n') -> str:
     """Returns cypher query for creating bulk nodes via APOC"""
     return """UNWIND ${key} as {var}
