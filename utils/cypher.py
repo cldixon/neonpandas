@@ -1,8 +1,10 @@
+import pandas as pd 
+import numpy as np 
 from utils import df_tools
 
-def format_labels(labels, sep:str=':') -> str:
-    labels = df_tools.conform_to_set(labels)
-    return sep + sep.join(labels)
+def format_labels(labels, sep:str=':', n:int=None) -> str:
+    """Formats node labels for neo4j MATCH statement."""
+    return sep + sep.join((labels if not n else labels[:n]))
 
 def format_properties(properties:dict, sep:str=', ') -> str:
     props = {}
@@ -17,9 +19,12 @@ def create_neo_match(labels:set, key:str, value, var:str='n') -> str:
     """Creates minimal Cypher node MATCH statement required for 
     matching to a specific node. Requires node labels, and key-value
     pair for identification."""
-    if isinstance(value, str):
-        value = '"{}"'.format(value)
-    return '({var}{lbls} {{{k}: {v}}})'.format(var=var, lbls=format_labels(labels), k=key, v=value)
+    if pd.isnull(labels):
+        return np.nan
+    else:
+        if isinstance(value, str):
+            value = '"{}"'.format(value)
+        return '({var}{lbls} {{{k}: {v}}})'.format(var=var, lbls=format_labels(labels), k=key, v=value)
 
 def apoc_node_create(key:str='nodes', var:str='n') -> str:
     """Returns cypher query for creating bulk nodes via APOC"""

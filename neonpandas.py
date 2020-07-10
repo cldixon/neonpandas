@@ -2,6 +2,7 @@ import pandas as pd
 from neo4j import GraphDatabase 
 from utils import df_tools 
 from utils import cypher
+from utils.node import Node
 
 class NodeFrame(pd.DataFrame):
     def __init__(self, data, id_col:str=None, lbl_col:str=None, labels=None):
@@ -13,8 +14,8 @@ class NodeFrame(pd.DataFrame):
 
     def show(self):
         return self.style.hide_index()
-        
-    def _set_node_labels(self, lbl_col:str=None, labels:set=None):
+         
+    def _set_node_labels(self, lbl_col:str=None, labels:tuple=None):
         """Part of NeonPandas DataFrame processing. Creates `labels` 
         column in DataFrame which is used in interaction with Neo4j."""
         _lbls = df_tools._merge_labels(self, column=lbl_col, labels=labels)
@@ -25,8 +26,7 @@ class NodeFrame(pd.DataFrame):
         return
 
     def _set_node_index(self):
-        self['neo_idx'] = self.apply(
-            lambda x: cypher.create_neo_match(x.labels, self.id_col, x[self.id_col]), axis=1)
+        self['neo_idx'] = df_tools._generate_node_idx(self, key=self.id_col)
         self.set_index('neo_idx', inplace=True)
         return
 
@@ -37,17 +37,34 @@ def read_csv(filepath:str, column:str=None, labels:set=None) -> NodeFrame:
 
 
 class EdgeFrame(pd.DataFrame):
-    def __init__(self, data, src_col:str='src', dest_col:str='dest', rel_col:str=None, rel_types:set=None):
+    def __init__(self, data, 
+                rel_col:str=None, rel_type:str=None,
+                src_col:str='src', dest_col:str='dest'):
         super().__init__(data)
         self.whatami = "NeonPandas EdgeFrame"
         self.src_col = src_col
         self.dest_col = dest_col
-        self._set_relationship_types(rel_col=rel_col, rel_types=rel_types)
-        
-    def _set_relationship_types(self, rel_col:str=None, rel_types:set=None):
-        rel_lbls = df_tools._merge_labels(self, column=rel_col, labels=rel_types)
-        self.drop(columns=[rel_col], inplace=True)
-        self.insert(0, 'rel_types', rel_lbls)
+        self._set_relationship_type(rel_col=rel_col, rel_type=rel_type)
+    
+    def show(self):
+        return self.style.hide_index()
+
+    def _set_relationship_type(self, rel_col:str=None, rel_type:str=None):
+        """Sets the relationship type information for EdgeFrame. 
+        Two input options:
+        1. Provide pre-existing column name via the 'rel_col' parameter.
+        2. Provide a static string which will apply to all rows in EdgeFrame
+        via the 'rel_type' parameter.
+        In either case, each Edge's 'rel_type' should be of `string` type."""
+        if rel_col and rel_type is None:
+            assert rel_col in self.columns 
+            _rel_type = self[rel_col].tolist()
+            self.drop(columns=[rel_col], inplace=True)
+        elif rel_type and rel_col is None:
+            _rel_type = [rel_type for i in range(len(self))]
+        else:
+            raise ValueError("Must provide either 'rel_col' or 'rel_type' parameter only.")
+        self.insert(0, 'rel_type', _rel_type)
         return
 
 
