@@ -15,9 +15,21 @@ class Node:
     def __str__(self):
         return self.match()
 
+    def __eq__(self, node) -> bool:
+        if isinstance(node, self.__class__):
+            return self._get_id() == node._get_id() and self.labels.has_intersection(node.labels)
+        else:
+            return False
+
+    def __hash__(self):
+        return hash((self.key, self.value))
+
     def num_labels(self) -> int:
         """Returns the number of labels for Node."""
         return len(self.labels)
+
+    def _get_id(self):
+        return {self.key: self.value}
 
     def match(self, n_lbls:int=None, var:str=None) -> str:
         print_val = ('"{}"'.format(self.value) if isinstance(self.value, str) else self.value)
@@ -25,3 +37,10 @@ class Node:
         var = (self.var if var is None else var)
         _template = '({var}{lbls} {{{k}: {v}}})'
         return _template.format(var=var, lbls=_lbls, k=self.key, v=print_val)
+
+
+def find_match(x:Node, nodes) -> Node:
+    for n in nodes:
+        if x == n:
+            return n
+    return x

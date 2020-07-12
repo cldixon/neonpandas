@@ -20,20 +20,21 @@ class NodeFrame(pd.DataFrame):
         column in DataFrame which is used in interaction with Neo4j."""
         _lbls = df_tools._merge_labels(self, column=lbl_col, labels=labels)
         # finish processing dataframe and labels column
-        self.drop(columns=[lbl_col], inplace=True)
+        if lbl_col in self:
+            self.drop(columns=[lbl_col], inplace=True)
         # set labels as first column
         self.insert(0, 'labels', _lbls)
         return
 
     def _set_node_index(self):
-        self['neo_idx'] = df_tools._generate_node_idx(self, key=self.id_col)
-        self.set_index('neo_idx', inplace=True)
+        self['node'] = df_tools._generate_node_idx(self, key=self.id_col)
+        self.set_index('node', inplace=True)
         return
 
-def read_csv(filepath:str, column:str=None, labels:set=None) -> NodeFrame:
+def read_csv(filepath:str, id_col:str=None, lbl_col:str=None, labels:tuple=None) -> NodeFrame:
     """Read neonpandas NodeFrame from csv file."""
     df = pd.read_csv(filepath)
-    return NodeFrame(df, column=column, labels=labels)
+    return NodeFrame(df, id_col=id_col, lbl_col=lbl_col, labels=labels)
 
 
 class EdgeFrame(pd.DataFrame):

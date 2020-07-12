@@ -9,6 +9,8 @@ def conform_to_list(x) -> list:
         return [x]
     elif isinstance(x, set):
         return list(x)
+    elif isinstance(x, tuple):
+        return list(x)
     elif x is None:
         return []
     else:
