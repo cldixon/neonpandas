@@ -1,35 +1,50 @@
 import pandas as pd 
+from pandas import DataFrame, Series
 from neo4j import GraphDatabase 
 from utils import df_tools 
 from utils import cypher
-from utils.node import Node
+from utils import node_tools
+from utils import edge_tools
 
-class NodeFrame(pd.DataFrame):
-    def __init__(self, data, id_col:str=None, lbl_col:str=None, labels=None):
-        super().__init__(data)
-        self.whatami = "I am a NeonPandas DataFrame"
-        self.id_col = id_col
-        self._set_node_labels(lbl_col=lbl_col, labels=labels)
-        self._set_node_index()
 
-    def show(self):
-        return self.style.hide_index()
-         
-    def _set_node_labels(self, lbl_col:str=None, labels:tuple=None):
-        """Part of NeonPandas DataFrame processing. Creates `labels` 
-        column in DataFrame which is used in interaction with Neo4j."""
-        _lbls = df_tools._merge_labels(self, column=lbl_col, labels=labels)
-        # finish processing dataframe and labels column
+class NodeFrame(DataFrame):
+    def __init__(self, data, id_col:str=None, lbl_col:str=None, labels:set=None):
+        super(NodeFrame, self).__init__(data)
+        self.id_col = self.set_id_column(id_col)
+        # optional to construct labels column
+        if lbl_col or labels:
+            self.set_labels(lbl_col, labels)
+    
+    @property
+    def _constructor(self):
+        return NodeFrame
+    
+    def set_id_column(self, id_col:str):
+        if id_col in self:
+            return id_col
+        elif id_col is None:
+            return None
+        else:
+            raise ValueError("Column '{}' not in NodeFrame.".format(id_col))
+        return
+    
+    def set_labels(self, lbl_col:str=None, labels:set=None):
+        if lbl_col is not None and labels is None:
+            assert lbl_col in self.columns
+            _lbls = self[lbl_col].apply(lambda x: df_tools.conform_to_set(x))
+        elif lbl_col is not None and labels is not None:
+            assert lbl_col in self.columns
+            _lbls = self[lbl_col].apply(lambda x: df_tools.conform_to_set(labels).union(df_tools.conform_to_set(x)))
+        elif lbl_col is None and labels is not None:
+            labels = df_tools.conform_to_set(labels)
+            _lbls = [labels for i in range(len(self))]
+        else:
+            raise ValueError("Must provide either 'labels' or 'column' as input for attribute type.")
         if lbl_col in self:
             self.drop(columns=[lbl_col], inplace=True)
-        # set labels as first column
         self.insert(0, 'labels', _lbls)
         return
 
-    def _set_node_index(self):
-        self['node'] = df_tools._generate_node_idx(self, key=self.id_col)
-        self.set_index('node', inplace=True)
-        return
 
 def read_csv(filepath:str, id_col:str=None, lbl_col:str=None, labels:tuple=None) -> NodeFrame:
     """Read neonpandas NodeFrame from csv file."""
@@ -37,37 +52,41 @@ def read_csv(filepath:str, id_col:str=None, lbl_col:str=None, labels:tuple=None)
     return NodeFrame(df, id_col=id_col, lbl_col=lbl_col, labels=labels)
 
 
-class EdgeFrame(pd.DataFrame):
-    def __init__(self, data, 
-                rel_col:str=None, rel_type:str=None,
-                src_col:str='src', dest_col:str='dest'):
-        super().__init__(data)
-        self.whatami = "NeonPandas EdgeFrame"
-        self.src_col = src_col
-        self.dest_col = dest_col
-        self._set_relationship_type(rel_col=rel_col, rel_type=rel_type)
+class EdgeFrame(DataFrame):
+    def __init__(self, data, rel_col:str=None, src_col:str='src', dest_col:str='dest'):
+        super(EdgeFrame, self).__init__(data)
+        self.rel_col = rel_col
+        if self.rel_col:
+            self.set_relationship(self.rel_col)
+        if src_col or dest_col:
+            self.src_col = self.set_src_column(src_col)
+            self.dest_col = self.set_dest_column(dest_col)
     
-    def show(self):
-        return self.style.hide_index()
-
-    def _set_relationship_type(self, rel_col:str=None, rel_type:str=None):
-        """Sets the relationship type information for EdgeFrame. 
-        Two input options:
-        1. Provide pre-existing column name via the 'rel_col' parameter.
-        2. Provide a static string which will apply to all rows in EdgeFrame
-        via the 'rel_type' parameter.
-        In either case, each Edge's 'rel_type' should be of `string` type."""
-        if rel_col and rel_type is None:
-            assert rel_col in self.columns 
-            _rel_type = self[rel_col].tolist()
-            self.drop(columns=[rel_col], inplace=True)
-        elif rel_type and rel_col is None:
-            _rel_type = [rel_type for i in range(len(self))]
-        else:
-            raise ValueError("Must provide either 'rel_col' or 'rel_type' parameter only.")
-        self.insert(0, 'rel_type', _rel_type)
+    @property
+    def _constructor(self):
+        return EdgeFrame
+    
+    def set_relationship(self, rel_col):
+        assert rel_col in self
+        _rels = self[rel_col]
+        self.drop(columns=[rel_col], inplace=True)
+        self.insert(0, 'rel_type', _rels)
         return
-
+    
+    def _set_node_column(self, node_col:str):
+        if isinstance(node_col, str):
+            assert node_col in self
+            return node_col 
+        elif node_col is None:
+            return node_col
+        else:
+            raise ValueError("'{}' column not found in EdgeFrame.".format(node_col))
+            
+    def set_src_column(self, src_col:str):
+        return self._set_node_column(src_col)
+    
+    def set_dest_column(self, dest_col:str):
+        return self._set_node_column(dest_col)
 
 
 class Graph:

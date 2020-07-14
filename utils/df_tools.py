@@ -1,6 +1,6 @@
 import neo4j
 import pandas as pd 
-from utils.node import Node
+from utils.node_tools import Node
 
 def conform_to_list(x) -> list:
     if isinstance(x, list):
@@ -38,7 +38,7 @@ def conform_to_tuple(x) -> tuple:
     elif isinstance(x, set):
         return tuple(x)
     else:
-        raise ValueErro("Invalid input for 'x'. Couldn't convert to tuple.")
+        raise ValueError("Invalid input for 'x'. Couldn't convert to tuple.")
 
 
 def prepare_record(r:dict) -> dict:
@@ -79,18 +79,26 @@ def neo_nodes_to_df(neo_nodes:neo4j.work.result.Result) -> pd.DataFrame:
     nodes = list(neo_nodes.graph().nodes)
     return pd.DataFrame(prepare_node(n) for n in nodes)
 
+def conform_to_this(this:str):
+    _conform_funcs = {
+        'set': conform_to_set,
+        'tuple': conform_to_tuple,
+        'list': conform_to_list
+    }
+    return _conform_funcs.get(this)
+
 def _merge_labels(df:pd.DataFrame, column:str=None, labels:tuple=None) -> pd.Series:
     """This function properly creates the labels column when creating a
     NodeFrame object or the relationship types when creating an EdgeFrame
     object."""
     if column is not None and labels is None:
         assert column in df.columns
-        _lbls = df[column].apply(lambda x: conform_to_tuple(x))
+        _lbls = df[column].apply(lambda x: conform_to_set(x))
     elif column is not None and labels is not None:
         assert column in df.columns
-        _lbls = df[column].apply(lambda x: conform_to_tuple(labels) + conform_to_tuple(x))
+        _lbls = df[column].apply(lambda x: conform_to_set(labels).union(conform_to_set(x)))
     elif column is None and labels is not None:
-        labels = conform_to_tuple(labels)
+        labels = conform_to_set(labels)
         _lbls = [labels for i in range(len(df))]
     else:
         raise ValueError("Must provide either 'labels' or 'column' as input for attribute type.")
