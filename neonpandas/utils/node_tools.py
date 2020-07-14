@@ -1,6 +1,6 @@
-from utils import cypher 
-from utils import df_tools
-from utils.ordered_set import OrderedSet
+from neonpandas.utils import cypher 
+from neonpandas.utils import df_tools
+from neonpandas.utils.ordered_set import OrderedSet
 
 class Node:
     def __init__(self, labels:set, key, value, var:str='n'):

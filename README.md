@@ -2,7 +2,7 @@
 
 A Pandas-centric interface to the Neo4j graph database.
 
-![](resources/logo.png)
+![](src/logo.png)
 
 Inspired by projects such as [geopandas](https://github.com/geopandas/geopandas), [huntlib](https://github.com/target/huntlib), and [cyberpandas](https://github.com/ContinuumIO/cyberpandas), `neonpandas` facilitates working with Neo4j  graph data with all of the features of the Pandas/NumPy/SciPy stack.
 

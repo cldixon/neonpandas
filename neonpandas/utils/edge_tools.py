@@ -1,6 +1,5 @@
 import pandas as pd 
-import neonpandas as npd 
-from utils import node_tools
+from neonpandas.utils import node_tools
 
 def _already_contains_nodes(col:pd.Series, num:int=3):
     for x in col[:num]:

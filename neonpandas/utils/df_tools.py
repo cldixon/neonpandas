@@ -1,6 +1,6 @@
 import neo4j
 import pandas as pd 
-from utils.node_tools import Node
+from neonpandas.utils.node_tools import Node
 
 def conform_to_list(x) -> list:
     if isinstance(x, list):
@@ -87,10 +87,9 @@ def conform_to_this(this:str):
     }
     return _conform_funcs.get(this)
 
-def _merge_labels(df:pd.DataFrame, column:str=None, labels:tuple=None) -> pd.Series:
+def _merge_labels(df:pd.DataFrame, column:str=None, labels:set=None) -> pd.Series:
     """This function properly creates the labels column when creating a
-    NodeFrame object or the relationship types when creating an EdgeFrame
-    object."""
+    NodeFrame object."""
     if column is not None and labels is None:
         assert column in df.columns
         _lbls = df[column].apply(lambda x: conform_to_set(x))

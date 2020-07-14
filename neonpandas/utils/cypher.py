@@ -1,6 +1,6 @@
 import pandas as pd 
 import numpy as np 
-from utils import df_tools
+from neonpandas.utils import df_tools
 
 def format_labels(labels, sep:str=':', n:int=None) -> str:
     """Formats node labels for neo4j MATCH statement."""
