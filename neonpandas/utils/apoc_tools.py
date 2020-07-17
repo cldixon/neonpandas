@@ -2,7 +2,7 @@ from neonpandas.utils import df_tools
 from neonpandas.frames.nodeframe import NodeFrame
 from neonpandas.frames.edgeframe import EdgeFrame
 
-#### Tools for transforming DataFrames into cypher-apoc format ####
+#### Functions for transforming DataFrames into cypher-apoc format ####
 
 ## APOC Conversion for NodeFrames -----
 def convert_nodes_to_apoc(nf:NodeFrame, lbls_col:str='labels') -> list:
