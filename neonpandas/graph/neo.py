@@ -1,7 +1,8 @@
 import pandas as pd 
 from neo4j import GraphDatabase
-from neonpandas.utils import cypher
 from neonpandas.utils import df_tools
+from neonpandas.utils import apoc_tools
+from neonpandas.graph import cypher
 from neonpandas.frames.nodeframe import NodeFrame
 from neonpandas.frames.edgeframe import EdgeFrame
 
@@ -10,6 +11,7 @@ class Graph:
         self.uri = uri
         self.driver = GraphDatabase.driver(uri=self.uri, auth=auth)
         self.session = self.driver.session()
+        self.queries = cypher.Cypher()
         
     def close(self):
         self.driver.close()
@@ -18,39 +20,44 @@ class Graph:
         result = self.session.run(query, params)
         return result
 
-    def create_nodes(self, nodes:NodeFrame):
+    def create_nodes(self, nf:NodeFrame):
         """Create Nodes in Neo4j from input Pandas Dataframe."""
-        if 'labels' not in nodes.columns:
+        if nf.ready_for_upload():
+            # prepare data for apoc
+            apoc_nodes = apoc_tools.convert_nodes_to_apoc(nf)
+            self.run(self.queries.apoc_node_create(), {'nodes': apoc_nodes})
+        else:
+            # TODO: This check will be more robust with introduction of LabelSeries
             raise ValueError("Nodes DataFrame must contain 'labels' column. Use NeonPandas preprocessing first.")
-        # prepare data for apoc
-        apoc_nodes = df_tools.prepare_df_for_apoc(nodes)
-        self.run(cypher.apoc_node_create(), {'nodes': apoc_nodes})
+        return
 
-    def create_relationships(self, rels:pd.DataFrame, query:str, key:str='edges'):
-        """Create Relationships in Neo4j from input Pandas DataFrame.
-        Currently must provide a custom query to import dataframe
-        into Neo4j as Relationship creation is more complicated than nodes."""
-        apoc_rels = df_tools.convert_to_records(rels)
-        self.run(query, {key: apoc_rels})
+    def create_edges(self, ef:EdgeFrame):
+        if ef.ready_for_upload():
+            # prepare data for apoc
+            apoc_edges = apoc_tools.convert_edges_to_apoc(ef)
+            self.run(self.queries.apoc_edge_create(), {'edges': apoc_edges})
+        else:
+            raise ValueError("Edgeframe is not yet ready for upload to Neo4j Graph.")
+        return
 
 
-    def create_node_constraints(self, constrs:NodeFrame, labels:str='labels', prop_name:str='property'):
+    def create_node_constraints(self, constrs, labels:str='labels', prop_name:str='property'):
         for c in df_tools.convert_to_records(constrs):
             try:
-                self.run(cypher.create_constraint_query(c.get(labels), c.get(prop_name)))
+                self.run(self.queries.create_constraint_query(c.get(labels), c.get(prop_name)))
             except:
                 raise RuntimeError("Error creating constraint on attr {lbls}.".format(c.get(labels)))
         return
 
-    def semi_join(self, df:NodeFrame, on:str, labels={}) -> pd.DataFrame:
+    def semi_join(self, df, on:str, labels={}) -> pd.DataFrame:
         try:
-            result = self.run(cypher.bulk_node_exists_query(labels=labels, field=on), 
+            result = self.run(self.queries.bulk_node_exists_query(labels=labels, field=on), 
                                 {'nodes': df_tools.convert_to_records(df)})
             return df_tools.neo_nodes_to_df(result)
         except:
             return pd.DataFrame()
         
-    def anti_join(self, df:NodeFrame, on:str, labels={}) -> pd.DataFrame:
+    def anti_join(self, df, on:str, labels={}) -> pd.DataFrame:
         y = self.semi_join(df, on, labels)
         return df_tools.anti_join(df, y[[on]], on=on)
 
@@ -59,5 +66,5 @@ class Graph:
         for nodes with matching labels and properties, with option 
         to limit number of results. Ability to match relationships
         needs to be added later."""
-        result = self.run(cypher.node_match_query(labels, properties, limit=limit))
+        result = self.run(self.queries.node_match_query(labels, properties, limit=limit))
         return df_tools.neo_nodes_to_df(result)

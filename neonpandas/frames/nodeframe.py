@@ -40,7 +40,12 @@ class NodeFrame(DataFrame):
         self.insert(0, 'labels', _lbls)
         return
 
-def read_csv(filepath:str, id_col:str=None, lbl_col:str=None, labels:tuple=None) -> NodeFrame:
+    def ready_for_upload(self) -> bool:
+        """Check if NodeFrame is ready for upload to Neo4j Graph."""
+        return (True if 'labels' in self else False)
+
+
+def load_nodeframe(filepath:str, *args, **kwargs) -> NodeFrame:
     """Read neonpandas NodeFrame from csv file."""
     df = pd.read_csv(filepath)
-    return NodeFrame(df, id_col=id_col, lbl_col=lbl_col, labels=labels)
+    return NodeFrame(df, *args, **kwargs)

@@ -1,11 +1,10 @@
-from neonpandas.utils import cypher 
+from pandas import Series
+from neonpandas.graph import cypher 
 from neonpandas.utils import df_tools
-from neonpandas.utils.ordered_set import OrderedSet
 
 class Node:
-    def __init__(self, labels:set, key, value, var:str='n'):
-        #self.labels = OrderedSet(df_tools.conform_to_tuple(labels))
-        self.labels = labels
+    def __init__(self, labels:set, key:str, value, var:str='n'):
+        self.labels = df_tools.conform_to_set(labels)
         self.key = key
         self.value = value
         self.var = (var if var is not None else 'n')
@@ -18,7 +17,7 @@ class Node:
 
     def __eq__(self, node) -> bool:
         if isinstance(node, self.__class__):
-            return self._get_id() == node._get_id() and self.shares_labels(node)
+            return self.get_id() == node.get_id() and self.shares_labels(node)
         else:
             return False
 
@@ -32,8 +31,11 @@ class Node:
         """Returns the number of labels for Node."""
         return len(self.labels)
 
-    def _get_id(self):
-        return {self.key: self.value}
+    def get_id(self, key:str=None) -> dict:
+        """Returns key:value pair of identifying property for Cypher query.
+        Can provide a 'key' parameter to override node object's stored key."""
+        key = (self.key if key is None else key)
+        return {key: self.value}
 
     def match(self, n_lbls:int=None, var:str=None) -> str:
         print_val = ('"{}"'.format(self.value) if isinstance(self.value, str) else self.value)
@@ -48,3 +50,9 @@ def find_match(x:Node, nodes) -> Node:
         if x == n:
             return n
     return x
+
+def contains_nodes(col:Series, num:int=3):
+    for x in col[:num]:
+        if not isinstance(x, Node):
+            return False
+    return True

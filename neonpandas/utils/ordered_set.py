@@ -1,5 +1,7 @@
 from indexed import IndexedOrderedDict
     
+## This is currently depracated ##
+
 class OrderedSet:
     def __init__(self, data:tuple):
         #self._data = IndexedOrderedDict(tuple((i, data[i]) for i in range(len(data))))

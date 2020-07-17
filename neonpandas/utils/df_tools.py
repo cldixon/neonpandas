@@ -1,6 +1,5 @@
 import neo4j
 import pandas as pd 
-from neonpandas.utils.node_tools import Node
 
 def conform_to_list(x) -> list:
     if isinstance(x, list):
@@ -28,18 +27,6 @@ def conform_to_set(x) -> set:
     else:
         raise ValueError("Input must be either str or set type.")
 
-def conform_to_tuple(x) -> tuple:
-    if isinstance(x, tuple):
-        return x
-    elif isinstance(x, str):
-        return (x,)
-    elif isinstance(x, list):
-        return tuple(x)
-    elif isinstance(x, set):
-        return tuple(x)
-    else:
-        raise ValueError("Invalid input for 'x'. Couldn't convert to tuple.")
-
 
 def prepare_record(r:dict) -> dict:
     r = {k:v for k,v in r.items() if pd.notnull(v)}
@@ -54,12 +41,6 @@ def convert_to_records(df:pd.DataFrame) -> list:
     dictionary upon conversion."""
     return [prepare_record(r) for r in df.to_dict(orient='records')]
 
-def prepare_df_for_apoc(npd_df:pd.DataFrame, lbls_col:str='labels') -> list:
-    """Converts NeonPandas Dataframe to formatted array for APOC commands."""
-    return [
-        {'labels': conform_to_list(r.get(lbls_col)),
-         'properties': {k:v for k,v in r.items() if k != lbls_col}}
-        for r in convert_to_records(npd_df)]
 
 
 def anti_join(x:pd.DataFrame, y:pd.DataFrame, on:str) -> pd.DataFrame:
@@ -75,37 +56,11 @@ def prepare_node(node:neo4j.graph.Node) -> dict:
     properties = dict(node.items())
     return {**attr, **properties}
 
+
 def neo_nodes_to_df(neo_nodes:neo4j.work.result.Result) -> pd.DataFrame:
     nodes = list(neo_nodes.graph().nodes)
     return pd.DataFrame(prepare_node(n) for n in nodes)
 
-def conform_to_this(this:str):
-    _conform_funcs = {
-        'set': conform_to_set,
-        'tuple': conform_to_tuple,
-        'list': conform_to_list
-    }
-    return _conform_funcs.get(this)
 
-def _merge_labels(df:pd.DataFrame, column:str=None, labels:set=None) -> pd.Series:
-    """This function properly creates the labels column when creating a
-    NodeFrame object."""
-    if column is not None and labels is None:
-        assert column in df.columns
-        _lbls = df[column].apply(lambda x: conform_to_set(x))
-    elif column is not None and labels is not None:
-        assert column in df.columns
-        _lbls = df[column].apply(lambda x: conform_to_set(labels).union(conform_to_set(x)))
-    elif column is None and labels is not None:
-        labels = conform_to_set(labels)
-        _lbls = [labels for i in range(len(df))]
-    else:
-        raise ValueError("Must provide either 'labels' or 'column' as input for attribute type.")
-    return _lbls
-
-def _generate_node_idx(df:pd.DataFrame, key:str, value_col:str=None, lbls_col:str='labels', var:str='n') -> pd.Series:
-    # if value is not provided, assume key and value are the same; the column name matches
-    value_col = (value_col if value_col is not None else key)
-    if value_col not in df:
-        raise ValueError("Input '_id_col' must be a column in the input DataFrame.")
-    return df.apply(lambda x: Node(x[lbls_col], key, x[value_col], var=var), axis=1)
+def get_column_idx(df:pd.DataFrame, col_name:str) -> int:
+    return df.columns.get_loc(col_name)
