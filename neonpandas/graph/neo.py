@@ -40,7 +40,6 @@ class Graph:
             raise ValueError("Edgeframe is not yet ready for upload to Neo4j Graph.")
         return
 
-
     def create_node_constraints(self, constrs, labels:str='labels', prop_name:str='property'):
         for c in df_tools.convert_to_records(constrs):
             try:
@@ -49,22 +48,22 @@ class Graph:
                 raise RuntimeError("Error creating constraint on attr {lbls}.".format(c.get(labels)))
         return
 
-    def semi_join(self, df, on:str, labels={}) -> pd.DataFrame:
-        try:
-            result = self.run(self.queries.bulk_node_exists_query(labels=labels, field=on), 
-                                {'nodes': df_tools.convert_to_records(df)})
-            return df_tools.neo_nodes_to_df(result)
-        except:
-            return pd.DataFrame()
+    def semi_join(self, df, on:str, labels={}) -> NodeFrame:
+        result = self.run(self.queries.bulk_node_exists_query(labels=labels, field=on), 
+                            {'nodes': df_tools.convert_to_records(df)})
+        df = df_tools.neo_nodes_to_df(result)
+        return NodeFrame(df)
         
-    def anti_join(self, df, on:str, labels={}) -> pd.DataFrame:
+    def anti_join(self, df, on:str, labels={}) -> NodeFrame:
         y = self.semi_join(df, on, labels)
-        return df_tools.anti_join(df, y[[on]], on=on)
+        df = df_tools.anti_join(df, y[[on]], on=on)
+        return NodeFrame(df)
 
-    def match_nodes(self, labels:set={}, properties:dict={}, limit:int=None) -> pd.DataFrame:
+    def match_nodes(self, labels:set={}, properties:dict={}, limit:int=None, *args, **kwargs) -> NodeFrame:
         """Analogous to cypher match query; currently only queries
         for nodes with matching labels and properties, with option 
         to limit number of results. Ability to match relationships
         needs to be added later."""
         result = self.run(self.queries.node_match_query(labels, properties, limit=limit))
-        return df_tools.neo_nodes_to_df(result)
+        df = df_tools.neo_nodes_to_df(result)
+        return NodeFrame(df, *args, **kwargs)

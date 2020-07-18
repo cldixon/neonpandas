@@ -5,7 +5,11 @@ from neonpandas.utils import df_tools
 class NodeFrame(DataFrame):
     def __init__(self, data, id_col:str=None, lbl_col:str=None, labels:set=None):
         super(NodeFrame, self).__init__(data)
-        self.id_col = self.set_id_column(id_col)
+
+        # set column to regard as node identifier
+        if id_col:
+            self.set_id_column(id_col)
+
         # optional to construct labels column
         if lbl_col or labels:
             self.set_labels(lbl_col, labels)
@@ -16,9 +20,9 @@ class NodeFrame(DataFrame):
     
     def set_id_column(self, id_col:str):
         if id_col in self:
-            return id_col
+            self.id_col = id_col
         elif id_col is None:
-            return None
+            self.id_col = None
         else:
             raise ValueError("Column '{}' not in NodeFrame.".format(id_col))
         return

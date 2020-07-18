@@ -42,7 +42,6 @@ def convert_to_records(df:pd.DataFrame) -> list:
     return [prepare_record(r) for r in df.to_dict(orient='records')]
 
 
-
 def anti_join(x:pd.DataFrame, y:pd.DataFrame, on:str) -> pd.DataFrame:
     if len(y) > 0:
         xay = pd.merge(left=x, right=y, on=on, how='left', indicator=True)
