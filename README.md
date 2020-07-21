@@ -14,4 +14,10 @@ This is accomplished by NodeFrames and EdgeFrames, which are Pandas DataFrames w
 
 `data = [{'name': 'Ralph', 'species': 'Dog', 'age': 10}, {'name': 'Pip', 'species': 'Cat', 'age': 7}, {'name': 'Babe', 'species': 'Pig', 'age': 3}]`
 
-`pets = npd.NodeFrame(data, column='species', labels={'Pet'})`
+Create a NodeFrame from any data suitable for a Pandas DataFrame
+The **labels** column is a key component of the NodeFrame, and represents the _labels_ 
+for each node in Neo4j. The **labels** column can be created when the NodeFrame is
+instantiated or through the set_labels method manually.
+`pets = npd.NodeFrame(data, lbl_col='species', labels={'Pet'})`
+
+### TODO: Add section on EdgeFrame
