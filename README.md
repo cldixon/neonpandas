@@ -21,4 +21,6 @@ instantiated or through the set_labels method manually.
 
 `pets = npd.NodeFrame(data, lbl_col='species', labels={'Pet'})`
 
+<img src="src/nodeframe_example.png" width="350"/>
+
 ### TODO: Add section on EdgeFrame
