@@ -1,5 +1,5 @@
 from pandas import Series
-from neonpandas.graph import cypher 
+from neonpandas.utils import cypher_tools
 from neonpandas.utils import df_tools
 
 class Node:
@@ -39,7 +39,7 @@ class Node:
 
     def match(self, n_lbls:int=None, var:str=None) -> str:
         print_val = ('"{}"'.format(self.value) if isinstance(self.value, str) else self.value)
-        _lbls = cypher.format_labels(list(self.labels), n=n_lbls)
+        _lbls = cypher_tools.format_labels(list(self.labels), n=n_lbls)
         var = (self.var if var is None else var)
         _template = '({var}{lbls} {{{k}: {v}}})'
         return _template.format(var=var, lbls=_lbls, k=self.key, v=print_val)

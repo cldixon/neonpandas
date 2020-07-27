@@ -2,7 +2,7 @@ import pandas as pd
 from neo4j import GraphDatabase
 from neonpandas.utils import df_tools
 from neonpandas.utils import apoc_tools
-from neonpandas.graph import cypher
+from neonpandas.graph import queries
 from neonpandas.frames.nodeframe import NodeFrame
 from neonpandas.frames.edgeframe import EdgeFrame
 
@@ -11,7 +11,6 @@ class Graph:
         self.uri = uri
         self.driver = GraphDatabase.driver(uri=self.uri, auth=auth)
         self.session = self.driver.session()
-        self.queries = cypher.Cypher()
         
     def close(self):
         self.driver.close()
@@ -25,7 +24,7 @@ class Graph:
         if nf.ready_for_upload():
             # prepare data for apoc
             apoc_nodes = apoc_tools.convert_nodes_to_apoc(nf)
-            self.run(self.queries.apoc_node_create(), {'nodes': apoc_nodes})
+            self.run(queries.apoc_node_create(), {'nodes': apoc_nodes})
         else:
             # TODO: This check will be more robust with introduction of LabelSeries
             raise ValueError("Nodes DataFrame must contain 'labels' column. Use NeonPandas preprocessing first.")
@@ -35,7 +34,7 @@ class Graph:
         if ef.ready_for_upload():
             # prepare data for apoc
             apoc_edges = apoc_tools.convert_edges_to_apoc(ef)
-            self.run(self.queries.apoc_edge_create(), {'edges': apoc_edges})
+            self.run(queries.apoc_edge_create(), {'edges': apoc_edges})
         else:
             raise ValueError("Edgeframe is not yet ready for upload to Neo4j Graph.")
         return
@@ -43,13 +42,13 @@ class Graph:
     def create_node_constraints(self, constrs, labels:str='labels', prop_name:str='property'):
         for c in df_tools.convert_to_records(constrs):
             try:
-                self.run(self.queries.create_constraint_query(c.get(labels), c.get(prop_name)))
+                self.run(queries.create_constraint_query(c.get(labels), c.get(prop_name)))
             except:
                 raise RuntimeError("Error creating constraint on attr {lbls}.".format(c.get(labels)))
         return
 
     def semi_join(self, df, on:str, labels={}) -> NodeFrame:
-        result = self.run(self.queries.bulk_node_exists_query(labels=labels, field=on), 
+        result = self.run(queries.bulk_node_exists_query(labels=labels, field=on), 
                             {'nodes': df_tools.convert_to_records(df)})
         df = df_tools.neo_nodes_to_df(result)
         return NodeFrame(df)
@@ -64,6 +63,6 @@ class Graph:
         for nodes with matching labels and properties, with option 
         to limit number of results. Ability to match relationships
         needs to be added later."""
-        result = self.run(self.queries.node_match_query(labels, properties, limit=limit))
+        result = self.run(queries.node_match_query(labels, properties, limit=limit))
         df = df_tools.neo_nodes_to_df(result)
         return NodeFrame(df, *args, **kwargs)

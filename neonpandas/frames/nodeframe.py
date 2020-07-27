@@ -1,6 +1,7 @@
 import pandas as pd 
 from pandas import DataFrame
 from neonpandas.utils import df_tools 
+from neonpandas.frames import styling
 
 class NodeFrame(DataFrame):
     def __init__(self, data, id_col:str=None, lbl_col:str=None, labels:set=None):
@@ -13,7 +14,12 @@ class NodeFrame(DataFrame):
         # optional to construct labels column
         if lbl_col or labels:
             self.set_labels(lbl_col, labels)
-    
+
+    def show(self, num_rows:int=10):
+        """Stylized printout of NodeFrame. Includes coloring of
+        node label column. TODO: Needs to format defined `_id` column."""
+        return styling.style_nodeframe(self, num_rows)
+
     @property
     def _constructor(self):
         return NodeFrame

@@ -4,6 +4,7 @@ from neonpandas.graph import node
 from neonpandas.utils import df_tools 
 from neonpandas.utils import lbl_tools
 from neonpandas.frames import nodeframe
+from neonpandas.frames import styling
 
 class EdgeFrame(DataFrame):
     def __init__(self, data, rel_col:str=None, 
@@ -17,7 +18,7 @@ class EdgeFrame(DataFrame):
             # set relationship type column
             self.set_relationship(rel_col)
         
-        if src_col or dest_col:
+        if (src_col and dest_col) and not self._has_formatted_nodes():
             # define which columns contain src & dest nodes
             self.src_col = self.set_src_column(src_col)
             self.dest_col = self.set_dest_column(dest_col)
@@ -32,7 +33,12 @@ class EdgeFrame(DataFrame):
             # into Node columns. 
             # TODO: These colums will be a defined Series type.
             self.set_node_columns(labels, src_lbls, dest_lbls, src_lbl_col, dest_lbl_col)
-    
+
+    def show(self, num_rows:int=10):
+        """Stylized printout of EdgeFrame. 
+        Formats Relationship-Type column."""
+        return styling.style_edgeframe(self, num_rows)
+
     @property
     def _constructor(self):
         return EdgeFrame
@@ -44,25 +50,26 @@ class EdgeFrame(DataFrame):
         return EdgeFrame
     '''
     
-    def set_relationship(self, rel_col):
-        assert rel_col in self
+    def set_relationship(self, rel_col, col_idx:int=0):
+        #assert rel_col in self
         self.rel_col = rel_col
         _rels = self[rel_col]
         self.drop(columns=[rel_col], inplace=True)
-        self.insert(0, 'rel_type', _rels)
+        self.insert(col_idx, 'rel_type', _rels)
         return
 
     def set_node_columns(self, labels:set=None, 
                                 src_lbls:set=None, dest_lbls:set=None, 
-                                src_lbl_col:str=None, dest_lbl_col:str=None):
+                                src_lbl_col:str=None, dest_lbl_col:str=None,
+                                src_col_idx:int=0, dest_col_idx:int=2):
         """Convert src and dest columns into Node types. This will contain the identifying key-value
         properties, label set, and variable (e.g. n,b,etc.) for cypher query."""
         edge_inputs = [
-            (self.src_col, self.src_id, src_lbls, src_lbl_col), 
-            (self.dest_col, self.dest_id, dest_lbls, dest_lbl_col)
+            (self.src_col, self.src_id, src_lbls, src_lbl_col, src_col_idx), 
+            (self.dest_col, self.dest_id, dest_lbls, dest_lbl_col, dest_col_idx)
         ]
 
-        for _dir, _id, _dir_lbls, _dir_lbl_col  in edge_inputs:
+        for _dir, _id, _dir_lbls, _dir_lbl_col, _idx  in edge_inputs:
             # check against labels inputs
             if _dir_lbls is not None and labels is None:
                 _lbl_set = _dir_lbls 
@@ -79,14 +86,24 @@ class EdgeFrame(DataFrame):
             else:
                 self[_dir_lbl_col] = _lbls
 
-            # transform id and labels columns into single node column
+            # transform id and labels columns into single node columns
+
             self[_dir] = self.apply(lambda x: node.Node(x[_dir_lbl_col], _id, x[_dir], var=_dir[0]), axis=1)
             self.drop(columns=[_dir_lbl_col], inplace=True)
+
+            ## keeping this here!!!
+            ## below re-orders columns to be like (src)-[rel]-(dest)
+            ## just comment out above two lines and replace with below
+            ## depracated for now but may use later as it is aligned
+            ## with cypher cyntax
+            #_dir_nodes = self.apply(lambda x: node.Node(x[_dir_lbl_col], _id, x[_dir], var=_dir[0]), axis=1)
+            #self.drop(columns=[_dir_lbl_col, _dir], inplace=True)
+            #self.insert(_idx, _dir, _dir_nodes)
         return
     
     def _set_dir_column(self, node_col:str):
         if isinstance(node_col, str):
-            assert node_col in self
+            #assert node_col in self
             return node_col 
         elif node_col is None:
             return node_col
@@ -98,6 +115,15 @@ class EdgeFrame(DataFrame):
     
     def set_dest_column(self, dest_col:str):
         return self._set_dir_column(dest_col)
+
+    def _has_formatted_nodes(self) -> bool:
+        try:
+            if node.contains_nodes(self[self.src_col]) and node.contains_nodes(self[self.dest_col]):
+                return True
+            else:
+                return False
+        except:
+            return False
 
     def ready_for_upload(self):
         if self.rel_col is None:

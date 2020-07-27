@@ -6,3 +6,8 @@ __pycache__
 
 ## ds store
 .DS_Store
+
+## python dist items
+neonpandas.egg-info/
+dist/
+.pypirc
