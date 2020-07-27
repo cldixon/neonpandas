@@ -3,6 +3,10 @@ from collections import Counter
 from neonpandas.frames.nodeframe import NodeFrame
 from neonpandas.frames.edgeframe import EdgeFrame
 
+## Stylings for Node & Edge Frame classes. Provide
+## visual aspects for exposing neonpandas conventions.
+## more info:  https://pandas.pydata.org/pandas-docs/stable/user_guide/style.html
+
 # Neo4j Bolt Browser color pallette 
 bolt_colors = [
     '#F6C768',  # golden-yellow
