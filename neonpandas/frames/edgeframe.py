@@ -8,31 +8,31 @@ from neonpandas.frames import styling
 
 class EdgeFrame(DataFrame):
     def __init__(self, data, rel_col:str=None, 
-                src_col:str='src', dest_col:str='dest', 
-                src_id:str=None, dest_id:str=None,
-                src_lbl_col:str=None, dest_lbl_col:str=None,
-                labels:set=None, src_lbls:set=None, dest_lbls:set=None):
+                start_col:str='start', end_col:str='end', 
+                start_id:str=None, end_id:str=None,
+                start_lbl_col:str=None, end_lbl_col:str=None,
+                labels:set=None, start_lbls:set=None, end_lbls:set=None):
         super(EdgeFrame, self).__init__(data)
         
         if rel_col:
             # set relationship type column
             self.set_relationship(rel_col)
         
-        if (src_col and dest_col) and not self._has_formatted_nodes():
-            # define which columns contain src & dest nodes
-            self.src_col = self.set_src_column(src_col)
-            self.dest_col = self.set_dest_column(dest_col)
+        if (start_col and end_col) and not self._has_formatted_nodes():
+            # define which columns contain start & end nodes
+            self.start_col = self.set_start_column(start_col)
+            self.end_col = self.set_end_column(end_col)
 
-        if src_id or dest_id:
+        if start_id or end_id:
             # define 'key' name for each node (e.g. name, email_address, etc.)
-            self.src_id = (src_id if src_id is not None else self.src_col)
-            self.dest_id = (dest_id if dest_id is not None else self.dest_col)
+            self.start_id = (start_id if start_id is not None else self.start_col)
+            self.end_id = (end_id if end_id is not None else self.end_col)
         
-        if any([labels, src_lbls, dest_lbls, src_lbl_col, dest_lbl_col]):
-            # transform src & dest columns (and any input label information)
+        if any([labels, start_lbls, end_lbls, start_lbl_col, end_lbl_col]):
+            # transform start & end columns (and any input label information)
             # into Node columns. 
             # TODO: These colums will be a defined Series type.
-            self.set_node_columns(labels, src_lbls, dest_lbls, src_lbl_col, dest_lbl_col)
+            self.set_node_columns(labels, start_lbls, end_lbls, start_lbl_col, end_lbl_col)
 
     def show(self, num_rows:int=10):
         """Stylized printout of EdgeFrame. 
@@ -59,14 +59,14 @@ class EdgeFrame(DataFrame):
         return
 
     def set_node_columns(self, labels:set=None, 
-                                src_lbls:set=None, dest_lbls:set=None, 
-                                src_lbl_col:str=None, dest_lbl_col:str=None,
-                                src_col_idx:int=0, dest_col_idx:int=2):
-        """Convert src and dest columns into Node types. This will contain the identifying key-value
+                                start_lbls:set=None, end_lbls:set=None, 
+                                start_lbl_col:str=None, end_lbl_col:str=None,
+                                start_col_idx:int=0, end_col_idx:int=2):
+        """Convert start and end columns into Node types. This will contain the identifying key-value
         properties, label set, and variable (e.g. n,b,etc.) for cypher query."""
         edge_inputs = [
-            (self.src_col, self.src_id, src_lbls, src_lbl_col, src_col_idx), 
-            (self.dest_col, self.dest_id, dest_lbls, dest_lbl_col, dest_col_idx)
+            (self.start_col, self.start_id, start_lbls, start_lbl_col, start_col_idx), 
+            (self.end_col, self.end_id, end_lbls, end_lbl_col, end_col_idx)
         ]
 
         for _dir, _id, _dir_lbls, _dir_lbl_col, _idx  in edge_inputs:
@@ -92,7 +92,7 @@ class EdgeFrame(DataFrame):
             self.drop(columns=[_dir_lbl_col], inplace=True)
 
             ## keeping this here!!!
-            ## below re-orders columns to be like (src)-[rel]-(dest)
+            ## below re-orders columns to be like (start)-[rel]-(end)
             ## just comment out above two lines and replace with below
             ## depracated for now but may use later as it is aligned
             ## with cypher cyntax
@@ -110,15 +110,15 @@ class EdgeFrame(DataFrame):
         else:
             raise ValueError("'{}' column not found in EdgeFrame.".format(node_col))
             
-    def set_src_column(self, src_col:str):
-        return self._set_dir_column(src_col)
+    def set_start_column(self, start_col:str):
+        return self._set_dir_column(start_col)
     
-    def set_dest_column(self, dest_col:str):
-        return self._set_dir_column(dest_col)
+    def set_end_column(self, end_col:str):
+        return self._set_dir_column(end_col)
 
     def _has_formatted_nodes(self) -> bool:
         try:
-            if node.contains_nodes(self[self.src_col]) and node.contains_nodes(self[self.dest_col]):
+            if node.contains_nodes(self[self.start_col]) and node.contains_nodes(self[self.end_col]):
                 return True
             else:
                 return False
@@ -128,16 +128,16 @@ class EdgeFrame(DataFrame):
     def ready_for_upload(self):
         if self.rel_col is None:
             return False
-        for _col in [self.src_col, self.dest_col]:
+        for _col in [self.start_col, self.end_col]:
             if not node.contains_nodes(self[_col]):
                 return False
         return True
 
     def to_nodeframe(self, id_col:str='node', labels:set=None):
         """Transforms pair-columned EdgeFrame into NodeFrame
-        containing all unique nodes found in src & dest columns."""
+        containing all unique nodes found in start & end columns."""
         edges_df = pd.DataFrame(self)
-        melted_edges = pd.melt(edges_df[[self.src_col, self.dest_col]],
+        melted_edges = pd.melt(edges_df[[self.start_col, self.end_col]],
                     var_name='direction', value_name=id_col).drop(columns=['direction'])
         nodes = melted_edges.drop_duplicates(subset=[id_col]).reset_index(drop=True)
         return NodeFrame(nodes, id_col=id_col, labels=labels)
