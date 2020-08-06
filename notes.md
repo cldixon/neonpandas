@@ -1,14 +1,16 @@
-# Different ways to interact with Frame Classes
+# TODO
 
-## 1. Separate Node & Edge lists
+## Custom Series
+- Node Labels
+- Relationship Type
+- Node ID
+- Node Column (in EdgeFrame)
 
-### a. Node (1) & Edge (1) lists contain uuuid
+## Improve Cypher Query Parameters
 
-### b. Multiple Node lists and 1 Edge lists 
-    - Each NodeFrame contains one _class_ of nodes (e.g. Pets, Owners, etc.)
-    - Master EdgeFrame contains ways to link back to nodes
-        - Via uuid
-        - Via id-col & labels
+## Create Base Frame Class
+- e.g. NeoFrame
+- Handles arbitrary queries 
+- e.g. return both node and relationship data
 
-## 2. Single Edgelist 
-    - E
+change test
