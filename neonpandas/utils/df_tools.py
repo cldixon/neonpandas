@@ -56,7 +56,7 @@ def prepare_node(node:neo4j.graph.Node) -> dict:
     return {**attr, **properties}
 
 
-def neo_nodes_to_df(neo_nodes:neo4j.work.result.Result) -> pd.DataFrame:
+def neo_nodes_to_df(neo_nodes) -> pd.DataFrame:
     nodes = list(neo_nodes.graph().nodes)
     return pd.DataFrame(prepare_node(n) for n in nodes)
 
