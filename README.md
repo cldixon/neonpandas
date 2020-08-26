@@ -1,6 +1,6 @@
 # NeonPandas
 
-A Pandas-centric interface to the Neo4j graph database.
+A Pandas interface to the Neo4j graph database.
 
 <img src="src/logo.png" width="200"/>
 
