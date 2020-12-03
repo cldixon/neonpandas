@@ -12,5 +12,3 @@
 - e.g. NeoFrame
 - Handles arbitrary queries 
 - e.g. return both node and relationship data
-
-change test

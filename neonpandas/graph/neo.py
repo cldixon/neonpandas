@@ -7,9 +7,9 @@ from neonpandas.frames.nodeframe import NodeFrame
 from neonpandas.frames.edgeframe import EdgeFrame
 
 class Graph:
-    def __init__(self, uri:str, auth:tuple):
+    def __init__(self, uri:str, auth:tuple, encrypted: bool=False):
         self.uri = uri
-        self.driver = GraphDatabase.driver(uri=self.uri, auth=auth)
+        self.driver = GraphDatabase.driver(uri=self.uri, auth=auth, encrypted=encrypted)
         self.session = self.driver.session()
         
     def close(self):
