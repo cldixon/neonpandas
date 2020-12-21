@@ -55,7 +55,7 @@ class EdgeFrame(DataFrame):
         self.rel_col = rel_col
         _rels = self[rel_col]
         self.drop(columns=[rel_col], inplace=True)
-        self.insert(col_idx, 'rel_type', _rels)
+        self.insert(col_idx, rel_col, _rels)
         return
 
     def set_node_columns(self, labels:set=None, 
@@ -87,7 +87,6 @@ class EdgeFrame(DataFrame):
                 self[_dir_lbl_col] = _lbls
 
             # transform id and labels columns into single node columns
-
             self[_dir] = self.apply(lambda x: node.Node(x[_dir_lbl_col], _id, x[_dir], var=_dir[0]), axis=1)
             self.drop(columns=[_dir_lbl_col], inplace=True)
 

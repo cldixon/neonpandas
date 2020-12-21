@@ -49,9 +49,9 @@ def node_match_query(labels:set=None, properties:dict={}, limit:int=None) -> str
 
 def apoc_edge_create(key:str='edges') -> str:
     return """UNWIND ${key} AS edge
-    CALL apoc.merge.node(edge.src_lbls, edge.src_id) YIELD node AS src
-    WITH src, edge
-    CALL apoc.merge.node(edge.dest_lbls, edge.dest_id) YIELD node AS dest
-    WITH src, dest, edge
-    CALL apoc.merge.relationship(src, edge.rel_type, edge.properties, {{}}, dest) YIELD rel
+    CALL apoc.merge.node(edge.start_lbls, edge.start_id) YIELD node AS start
+    WITH start, edge
+    CALL apoc.merge.node(edge.end_lbls, edge.end_id) YIELD node AS end
+    WITH start, end, edge
+    CALL apoc.merge.relationship(start, edge.rel_type, edge.properties, {{}}, end) YIELD rel
     RETURN NULL""".format(key=key)

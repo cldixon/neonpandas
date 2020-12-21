@@ -62,7 +62,7 @@ def style_nodeframe(nf:NodeFrame, num_rows:int=10):
 def style_edgeframe(ef:EdgeFrame, num_rows:int=10):
     """Main function for styling EdgeFrame when printed."""
     return ef.head(num_rows).style.apply(
-        style_rel_types, subset=['rel_type']
+        style_rel_types, subset=ef.rel_col
     ).set_caption(
         'EdgeFrame'
     )

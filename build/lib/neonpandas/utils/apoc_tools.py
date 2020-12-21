@@ -56,18 +56,18 @@ def convert_edges_to_apoc(ef:EdgeFrame):
         list of dictionaries, with each dictionary formated for cypher query.
 
     """
-    non_property_columns = [ef.src_col, ef.dest_col, ef.rel_col]
+    non_property_columns = [ef.start_col, ef.end_col, ef.rel_col]
     edge_records = df_tools.convert_to_records(ef)
     apoc_edges = []
     for edge_rec in edge_records:
-        src_node = edge_rec.get(ef.src_col)
-        dest_node = edge_rec.get(ef.dest_col)
+        start_node = edge_rec.get(ef.start_col)
+        end_node = edge_rec.get(ef.end_col)
         apoc_data = {
             'rel_type': edge_rec.get(ef.rel_col),
-            'src_id': src_node.get_id(),
-            'dest_id': dest_node.get_id(),
-            'src_lbls': list(src_node.labels),
-            'dest_lbls': list(dest_node.labels),
+            'start_id': start_node.get_id(),
+            'end_id': end_node.get_id(),
+            'start_lbls': list(start_node.labels),
+            'end_lbls': list(end_node.labels),
             'properties' : {k:v for k,v in edge_rec.items() if k not in non_property_columns}
         }
         apoc_edges.append(apoc_data)
