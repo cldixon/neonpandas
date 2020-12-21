@@ -55,7 +55,7 @@ class EdgeFrame(DataFrame):
         self.rel_col = rel_col
         _rels = self[rel_col]
         self.drop(columns=[rel_col], inplace=True)
-        self.insert(col_idx, 'rel_type', _rels)
+        self.insert(col_idx, rel_col, _rels)
         return
 
     def set_node_columns(self, labels:set=None, 
