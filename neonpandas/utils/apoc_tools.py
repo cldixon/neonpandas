@@ -1,4 +1,5 @@
 from neonpandas.utils import df_tools
+from neonpandas.utils import datetimes
 from neonpandas.frames.nodeframe import NodeFrame
 from neonpandas.frames.edgeframe import EdgeFrame
 

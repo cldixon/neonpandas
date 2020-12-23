@@ -1,5 +1,6 @@
 import neo4j
 import pandas as pd 
+from neonpandas.utils import datetimes 
 
 def conform_to_list(x) -> list:
     if isinstance(x, list):
@@ -34,13 +35,12 @@ def prepare_record(r:dict) -> dict:
         r['labels'] = conform_to_list(r.get('labels'))
     return r
 
-def convert_to_records(df:pd.DataFrame) -> list:
+def convert_to_records(df:pd.DataFrame, convert_datetimes:bool=False) -> list:
     """Convert a Pandas DataFrame to array of dictionaries
     (using Pandas 'to_dicv(orient='records')` method). This
     function also removes null/nan values from each 
     dictionary upon conversion."""
     return [prepare_record(r) for r in df.to_dict(orient='records')]
-
 
 def anti_join(x:pd.DataFrame, y:pd.DataFrame, on:str) -> pd.DataFrame:
     if len(y) > 0:
