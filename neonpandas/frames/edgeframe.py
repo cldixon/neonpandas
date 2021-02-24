@@ -2,7 +2,6 @@ import pandas as pd
 from pandas import DataFrame
 from neonpandas.graph import node
 from neonpandas.utils import df_tools 
-from neonpandas.utils import lbl_tools
 from neonpandas.frames import nodeframe
 from neonpandas.frames import styling
 
@@ -79,7 +78,7 @@ class EdgeFrame(DataFrame):
                 raise ValueError("Do not provide input for both 'labels' & '{}'.".format(_dir))
 
             # merge labels and set as column in edgeframe
-            _lbls = lbl_tools.merge_labels(self, _dir_lbl_col, _lbl_set)
+            _lbls = df_tools.merge_labels(self, _dir_lbl_col, _lbl_set)
             if _dir_lbl_col is None:
                 _dir_lbl_col = '{}_labels'.format(_dir)
                 self.insert(df_tools.get_column_idx(self, _dir) + 1, _dir_lbl_col, _lbls)

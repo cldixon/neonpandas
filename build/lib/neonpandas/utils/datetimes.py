@@ -2,10 +2,10 @@ import pandas as pd
 from neo4j.time import DateTime
 from neonpandas.frames.nodeframe import NodeFrame
 
-def detect_datetime_cols(dtype) -> bool:
+def detect_datetimes(x) -> bool:
     """Detects if a pandas series (i.e. dataframe column)
     is of the Datetime dtype."""
-    return isinstance(dtype, pd.DatetimeTZDtype)
+    return isinstance(x, pd.Timestamp)
 
 def get_datetime_cols(df:pd.DataFrame) -> list:
     """Returns list of columns in DataFrame of DataTime dtype."""

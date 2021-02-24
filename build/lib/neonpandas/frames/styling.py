@@ -72,6 +72,9 @@ def get_first_lbl(x:set, sorted_lbls):
     return min(lbl_orders, key=lbl_orders.get)
 
 def get_label_colors(data):
+    print('!!! this is what the data to `get_label_colors()` looks like !!!!')
+    print(data)
+    print('----------------\n')
     lbl_counts = Counter([i for sublist in data for i in sublist])
     sorted_lbls = [k for k, v in sorted(lbl_counts.items(), key=lambda item: item[1])]
     sorted_lbls = {sorted_lbls[i]: i for i in range(len(sorted_lbls))}

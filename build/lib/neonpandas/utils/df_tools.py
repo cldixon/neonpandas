@@ -1,5 +1,6 @@
 import neo4j
 import pandas as pd 
+from pandas import DataFrame, Series
 from neonpandas.utils import datetimes 
 
 def conform_to_list(x) -> list:
@@ -41,6 +42,7 @@ def convert_to_records(df:pd.DataFrame, convert_datetimes:bool=False) -> list:
     function also removes null/nan values from each 
     dictionary upon conversion."""
     return [prepare_record(r) for r in df.to_dict(orient='records')]
+    
 
 def anti_join(x:pd.DataFrame, y:pd.DataFrame, on:str) -> pd.DataFrame:
     if len(y) > 0:
@@ -63,3 +65,20 @@ def neo_nodes_to_df(neo_nodes) -> pd.DataFrame:
 
 def get_column_idx(df:pd.DataFrame, col_name:str) -> int:
     return df.columns.get_loc(col_name)
+
+
+def merge_labels(df:DataFrame, column:str=None, labels:set=None) -> Series:
+    """This function properly creates the labels column when creating a
+    NodeFrame object."""
+    if column is not None and labels is None:
+        assert column in df.columns
+        _lbls = df[column].apply(lambda x: conform_to_set(x))
+    elif column is not None and labels is not None:
+        assert column in df.columns
+        _lbls = df[column].apply(lambda x: conform_to_set(labels).union(conform_to_set(x)))
+    elif column is None and labels is not None:
+        labels = conform_to_set(labels)
+        _lbls = Series([labels for i in range(len(df))])
+    else:
+        raise ValueError("Must provide either 'labels' or 'column' as input for attribute type.")
+    return _lbls
