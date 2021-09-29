@@ -9,7 +9,7 @@ def detect_datetimes(x) -> bool:
 
 def get_datetime_cols(df:pd.DataFrame) -> list:
     """Returns list of columns in DataFrame of DataTime dtype."""
-    return [col for col,val in df.dtypes.iteritems() if detect_datetime_cols(val)]
+    return [col for col,val in df.dtypes.iteritems() if detect_datetimes(val)]
 
 def convert_to_neo_datetime(dt:pd.Timestamp) -> DateTime:
     """Converts pandas TimeStamp object to Neo4j DateTime Object."""
